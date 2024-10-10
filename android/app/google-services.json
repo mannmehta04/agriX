@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "969389328654",
+    "firebase_url": "https://agrix-65b7e-default-rtdb.firebaseio.com",
+    "project_id": "agrix-65b7e",
+    "storage_bucket": "agrix-65b7e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:969389328654:android:8b84d657f379be73342f5f",
+        "android_client_info": {
+          "package_name": "com.example.agrix"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmfQVPj6zo4Fw2OSaD1Vu9fFW8nRU_hPE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

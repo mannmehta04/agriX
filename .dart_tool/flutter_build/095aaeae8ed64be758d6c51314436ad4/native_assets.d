@@ -1,0 +1,1 @@
+ D:\\agriX\\.dart_tool\\flutter_build\\095aaeae8ed64be758d6c51314436ad4\\native_assets.yaml: 
