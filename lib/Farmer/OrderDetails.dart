@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Orderdetails extends StatefulWidget {
   final Map<String, dynamic> order; // Receives the order data
@@ -10,9 +11,53 @@ class Orderdetails extends StatefulWidget {
 }
 
 class _OrderdetailsState extends State<Orderdetails> {
+  String? firstName; // To store the firstName after fetching
+  String? lastName;  // To store the lastName after fetching
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserDetails(widget.order['userId']);
+  }
+
+  Future<void> fetchUserDetails(String userId) async {
+    try {
+      // Check if the userId exists in Farmers collection
+      DocumentSnapshot farmerSnapshot =
+      await FirebaseFirestore.instance.collection('Farmers').doc(userId).get();
+
+      if (farmerSnapshot.exists) {
+        setState(() {
+          firstName = farmerSnapshot['firstName'];
+          lastName = farmerSnapshot['lastName']; // Fetch lastName from Farmers
+        });
+      } else {
+        // If not found in Farmers, check in Consumers collection
+        DocumentSnapshot consumerSnapshot =
+        await FirebaseFirestore.instance.collection('Consumers').doc(userId).get();
+
+        if (consumerSnapshot.exists) {
+          setState(() {
+            firstName = consumerSnapshot['firstName'];
+            lastName = consumerSnapshot['lastName']; // Fetch lastName from Consumers
+          });
+        } else {
+          setState(() {
+            firstName = 'Unknown'; // Handle case if userId not found in both
+            lastName = ''; // Handle lastName for unknown user
+          });
+        }
+      }
+    } catch (e) {
+      setState(() {
+        firstName = 'Error fetching name';
+        lastName = ''; // Handle lastName error
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Extracting order details from the passed order data
     var order = widget.order;
 
     return Scaffold(
@@ -39,11 +84,15 @@ class _OrderdetailsState extends State<Orderdetails> {
                 Text("Order Time: ${order['orderTime']}"),
                 Divider(),
                 Text(
+                  "Ordered by: ${firstName ?? 'Loading...'} ${lastName ?? ''}", // Display firstName and lastName
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                Divider(),
+                Text(
                   "Products Sold:",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 SizedBox(height: 8),
-                // Listing the products sold in the order
                 ...order['products'].map<Widget>((product) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4.0),

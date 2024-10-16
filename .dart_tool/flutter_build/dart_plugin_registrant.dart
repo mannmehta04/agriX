@@ -9,12 +9,12 @@ import 'dart:io'; // flutter_ignore: dart_io_import.
 import 'package:image_picker_android/image_picker_android.dart';
 import 'package:path_provider_android/path_provider_android.dart';
 import 'package:shared_preferences_android/shared_preferences_android.dart';
-import 'package:sqflite_android/sqflite_android.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:url_launcher_android/url_launcher_android.dart';
 import 'package:image_picker_ios/image_picker_ios.dart';
 import 'package:path_provider_foundation/path_provider_foundation.dart';
 import 'package:shared_preferences_foundation/shared_preferences_foundation.dart';
-import 'package:sqflite_darwin/sqflite_darwin.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:url_launcher_ios/url_launcher_ios.dart';
 import 'package:file_selector_linux/file_selector_linux.dart';
 import 'package:image_picker_linux/image_picker_linux.dart';
@@ -25,7 +25,7 @@ import 'package:file_selector_macos/file_selector_macos.dart';
 import 'package:image_picker_macos/image_picker_macos.dart';
 import 'package:path_provider_foundation/path_provider_foundation.dart';
 import 'package:shared_preferences_foundation/shared_preferences_foundation.dart';
-import 'package:sqflite_darwin/sqflite_darwin.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:url_launcher_macos/url_launcher_macos.dart';
 import 'package:file_selector_windows/file_selector_windows.dart';
 import 'package:image_picker_windows/image_picker_windows.dart';
@@ -67,10 +67,10 @@ class _PluginRegistrant {
       }
 
       try {
-        SqfliteAndroid.registerWith();
+        SqflitePlugin.registerWith();
       } catch (err) {
         print(
-          '`sqflite_android` threw an error: $err. '
+          '`sqflite` threw an error: $err. '
           'The app may not function as expected until you remove this plugin from pubspec.yaml'
         );
       }
@@ -113,10 +113,10 @@ class _PluginRegistrant {
       }
 
       try {
-        SqfliteDarwin.registerWith();
+        SqflitePlugin.registerWith();
       } catch (err) {
         print(
-          '`sqflite_darwin` threw an error: $err. '
+          '`sqflite` threw an error: $err. '
           'The app may not function as expected until you remove this plugin from pubspec.yaml'
         );
       }
@@ -214,10 +214,10 @@ class _PluginRegistrant {
       }
 
       try {
-        SqfliteDarwin.registerWith();
+        SqflitePlugin.registerWith();
       } catch (err) {
         print(
-          '`sqflite_darwin` threw an error: $err. '
+          '`sqflite` threw an error: $err. '
           'The app may not function as expected until you remove this plugin from pubspec.yaml'
         );
       }

@@ -1,0 +1,12 @@
+{
+  "greeting": "Hello",
+  "account": {
+    "title": "Account",
+    "logout": "Log Out"
+  },
+  "language_switcher": {
+    "switch_language": "Switch Language",
+    "english": "English",
+    "gujarati": "Gujarati"
+  }
+}

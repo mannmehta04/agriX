@@ -31,27 +31,17 @@ class _PastordersState extends State<Pastorders> {
       // Process each order to fetch and sum quantities
       List<Map<String, dynamic>> orders = [];
       for (var doc in orderSnapshot.docs) {
-        // Fetch the products sub-collection for each order
-        QuerySnapshot productsSnapshot = await FirebaseFirestore.instance
-            .collection('Orders')
-            .doc(doc.id)
-            .collection('products')
-            .get();
+        var orderData = doc.data() as Map<String, dynamic>;
+
+        // Get quantities directly from the order document
+        Map<String, dynamic> quantitiesMap = orderData['quantities'] ?? {};
 
         // Sum up quantities
-        int totalQuantity = productsSnapshot.docs.fold(
-          0,
-              (sum, productDoc) {
-            var data = productDoc.data() as Map<String, dynamic>;
-            // Access quantity from nested map
-            var quantitiesMap = data['quantities'] as Map<String, dynamic>?; // Adjust key name if needed
-            int quantity = (quantitiesMap?['quantity'] as int?) ?? 0; // Default to 0 if not present
-            return sum + quantity;
-          },
-        );
+        int totalQuantity = quantitiesMap.values.fold(0, (sum, item) {
+          return sum + (item as int);
+        });
 
         // Add order data with total quantity
-        var orderData = doc.data() as Map<String, dynamic>;
         orderData['orderId'] = doc.id;
         orderData['totalQuantity'] = totalQuantity;
         orders.add(orderData);
@@ -63,6 +53,7 @@ class _PastordersState extends State<Pastorders> {
       return [];
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

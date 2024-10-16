@@ -30,6 +30,54 @@ class _OrderviewState extends State<Orderview> {
     return productSnapshot.data() as Map<String, dynamic>;
   }
 
+  Future<String> fetchUserFullName(String userId) async {
+    DocumentSnapshot farmerSnapshot = await FirebaseFirestore.instance
+        .collection('Farmers')
+        .doc(userId)
+        .get();
+
+    if (farmerSnapshot.exists) {
+      // If document exists in Farmers, return firstName and lastName
+      Map<String, dynamic> farmerData = farmerSnapshot.data() as Map<String, dynamic>;
+      String firstName = farmerData['firstName'] ?? 'Unknown';
+      String lastName = farmerData['lastName'] ?? '';
+      return '$firstName $lastName'.trim();
+    } else {
+      // If not in Farmers, try to fetch from Consumers
+      DocumentSnapshot consumerSnapshot = await FirebaseFirestore.instance
+          .collection('Consumers')
+          .doc(userId)
+          .get();
+
+      if (consumerSnapshot.exists) {
+        Map<String, dynamic> consumerData = consumerSnapshot.data() as Map<String, dynamic>;
+        String firstName = consumerData['firstName'] ?? 'Unknown';
+        String lastName = consumerData['lastName'] ?? '';
+        return '$firstName $lastName'.trim();
+      } else {
+        // If neither collection contains the user, return 'Unknown'
+        return 'Unknown';
+      }
+    }
+  }
+
+  // Future to fetch farmer's full name (supplier's full name) using farmerId
+  Future<String> fetchFarmerFullName(String farmerId) async {
+    DocumentSnapshot farmerSnapshot = await FirebaseFirestore.instance
+        .collection('Farmers')
+        .doc(farmerId)
+        .get();
+
+    if (farmerSnapshot.exists) {
+      Map<String, dynamic> farmerData = farmerSnapshot.data() as Map<String, dynamic>;
+      String firstName = farmerData['firstName'] ?? 'Unknown';
+      String lastName = farmerData['lastName'] ?? '';
+      return '$firstName $lastName'.trim();
+    } else {
+      return 'Unknown Farmer';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,7 +119,21 @@ class _OrderviewState extends State<Orderview> {
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
-                Text('User ID: $userId', style: TextStyle(color: Colors.grey)),
+
+                // Use FutureBuilder to fetch and display the user's full name
+                FutureBuilder<String>(
+                  future: fetchUserFullName(userId),
+                  builder: (context, userSnapshot) {
+                    if (userSnapshot.connectionState == ConnectionState.waiting) {
+                      return const Text('Loading user...');
+                    }
+                    if (!userSnapshot.hasData || userSnapshot.data == null) {
+                      return const Text('User not found', style: TextStyle(color: Colors.grey));
+                    }
+                    return Text('Customer: ${userSnapshot.data}', style: TextStyle(color: Colors.grey));
+                  },
+                ),
+
                 Text('Order Time: ${DateFormat('dd-MM-yyyy hh:mm a').format(orderTime)}', style: TextStyle(color: Colors.grey)),
                 const SizedBox(height: 20),
                 const Text('Products:',
@@ -85,7 +147,7 @@ class _OrderviewState extends State<Orderview> {
                       String productId = productIds[index];
                       int quantity = quantities[productId];
 
-                      // Use FutureBuilder to fetch the product name
+                      // Use FutureBuilder to fetch the product name and supplier's (farmer's) full name
                       return FutureBuilder<Map<String, dynamic>>(
                         future: fetchProductById(productId),
                         builder: (context, productSnapshot) {
@@ -105,20 +167,45 @@ class _OrderviewState extends State<Orderview> {
 
                           var productData = productSnapshot.data!;
                           String productName = productData['name'];
-                          String productSupplier = productData['user_id'];
-                          return ListTile(
-                            title: Text(productName,
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold)),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Quantity: $quantity',
-                                    style: const TextStyle(color: Colors.grey)),
-                                Text('Supplier: $productSupplier',
-                                    style: const TextStyle(color: Colors.grey)),
-                              ],
-                            ),
+                          String supplierId = productData['user_id'];
+
+                          return FutureBuilder<String>(
+                            future: fetchFarmerFullName(supplierId),
+                            builder: (context, farmerSnapshot) {
+                              if (farmerSnapshot.connectionState == ConnectionState.waiting) {
+                                return ListTile(
+                                  title: Text(productName,
+                                      style: const TextStyle(
+                                          fontSize: 16, fontWeight: FontWeight.bold)),
+                                  subtitle: const Text('Loading supplier...',
+                                      style: TextStyle(color: Colors.grey)),
+                                );
+                              }
+                              if (!farmerSnapshot.hasData || farmerSnapshot.data == null) {
+                                return ListTile(
+                                  title: Text(productName,
+                                      style: const TextStyle(
+                                          fontSize: 16, fontWeight: FontWeight.bold)),
+                                  subtitle: const Text('Supplier not found',
+                                      style: TextStyle(color: Colors.grey)),
+                                );
+                              }
+                              String farmerFullName = farmerSnapshot.data!;
+                              return ListTile(
+                                title: Text(productName,
+                                    style: const TextStyle(
+                                        fontSize: 16, fontWeight: FontWeight.bold)),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Quantity: $quantity',
+                                        style: const TextStyle(color: Colors.grey)),
+                                    Text('Supplier: $farmerFullName',
+                                        style: const TextStyle(color: Colors.grey)),
+                                  ],
+                                ),
+                              );
+                            },
                           );
                         },
                       );

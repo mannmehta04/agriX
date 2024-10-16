@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:intl/intl.dart'; // Add this for date formatting
 
 class Salestrack extends StatefulWidget {
   const Salestrack({super.key});
@@ -26,6 +27,7 @@ class _SalestrackState extends State<Salestrack> {
       String farmerUserId = FirebaseAuth.instance.currentUser!.uid;
       print('Fetching products for Farmer ID: $farmerUserId');
 
+      // Fetch farmer's products
       QuerySnapshot productSnapshot = await FirebaseFirestore.instance
           .collection('Products')
           .where('user_id', isEqualTo: farmerUserId)
@@ -45,8 +47,10 @@ class _SalestrackState extends State<Salestrack> {
 
       print("Farmer Product IDs: $farmerProductIds");
 
+      // Fetch orders that have these products
       QuerySnapshot orderSnapshot = await FirebaseFirestore.instance
           .collection('Orders')
+          .where('productIds', arrayContainsAny: farmerProductIds)
           .get();
 
       print("Total Orders Fetched: ${orderSnapshot.docs.length}");
@@ -55,33 +59,69 @@ class _SalestrackState extends State<Salestrack> {
         Map<String, dynamic>? orderData = orderDoc.data() as Map<String, dynamic>?;
 
         if (orderData != null) {
-          List<dynamic> productIdsInOrder = orderData['productIds'];
-          Map<String, dynamic> quantitiesInOrder = orderData['quantities'];
+          List<dynamic>? productIdsInOrder = orderData['productIds'] as List<dynamic>?;
+          Map<String, dynamic>? quantitiesInOrder = orderData['quantities'] as Map<String, dynamic>?;
 
-          bool hasFarmerProduct = productIdsInOrder.any((productId) {
-            return farmerProductIds.contains(productId);
-          });
+          // Fetch userId from the order
+          String userId = orderData['userId'] ?? 'Unknown User'; // Fetch userId
 
-          if (hasFarmerProduct) {
-            List<Map<String, dynamic>> farmerProductsInOrder = [];
+          if (productIdsInOrder != null && quantitiesInOrder != null) {
+            bool hasFarmerProduct = productIdsInOrder.any((productId) {
+              return farmerProductIds.contains(productId);
+            });
 
-            productIdsInOrder.forEach((productId) {
-              if (farmerProductIds.contains(productId)) {
-                farmerProductsInOrder.add({
-                  'productId': productId,
-                  'quantity': quantitiesInOrder[productId] ?? 0,
-                });
+            if (hasFarmerProduct) {
+              List<Map<String, dynamic>> farmerProductsInOrder = [];
+              double totalCostForFarmer = 0.0;
+
+              for (var productId in productIdsInOrder) {
+                if (farmerProductIds.contains(productId)) {
+                  int quantity = quantitiesInOrder[productId] ?? 0;
+
+                  // Fetch price from the Products collection if not available in the order
+                  double productPrice = 0.0;
+                  DocumentSnapshot productSnapshot = await FirebaseFirestore.instance
+                      .collection('Products')
+                      .doc(productId)
+                      .get();
+
+                  if (productSnapshot.exists) {
+                    var priceData = productSnapshot['price'];
+                    if (priceData is String) {
+                      productPrice = double.parse(priceData); // Convert string to double
+                    } else if (priceData is num) {
+                      productPrice = priceData.toDouble(); // Handle number types (int, double)
+                    }
+                  }
+
+                  totalCostForFarmer += quantity * productPrice;
+
+                  farmerProductsInOrder.add({
+                    'productId': productId,
+                    'quantity': quantity,
+                    'price': productPrice,
+                  });
+                }
               }
-            });
 
-            setState(() {
-              farmerOrders.add({
-                'orderId': orderDoc.id,
-                'totalCost': orderData['totalCost'],
-                'orderTime': orderData['orderTime'],
-                'products': farmerProductsInOrder,
+              // Format timestamp to readable date and time
+              Timestamp? orderTimestamp = orderData['orderTime'] as Timestamp?;
+              String formattedDateTime = 'Unknown Date';
+              if (orderTimestamp != null) {
+                DateTime orderDateTime = orderTimestamp.toDate();
+                formattedDateTime = DateFormat('yyyy-MM-dd HH:mm').format(orderDateTime);
+              }
+
+              setState(() {
+                farmerOrders.add({
+                  'orderId': orderDoc.id,
+                  'userId': userId, // Store userId from orders
+                  'totalCost': totalCostForFarmer, // Update total cost for farmer's products only
+                  'orderTime': formattedDateTime, // Use formatted date and time
+                  'products': farmerProductsInOrder,
+                });
               });
-            });
+            }
           }
         }
       }
@@ -110,7 +150,7 @@ class _SalestrackState extends State<Salestrack> {
       appBar: AppBar(
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
-        title: Text(
+        title: const Text(
           'Sales Track',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -132,6 +172,7 @@ class _SalestrackState extends State<Salestrack> {
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text("User ID: ${order['userId']}"), // Display userId from orders
                   Text("Total Cost: ${order['totalCost']}"),
                   Text("Order Time: ${order['orderTime']}"),
                 ],
