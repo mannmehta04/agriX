@@ -1,14 +1,17 @@
 import 'package:agrix/Consumer/PastOrders.dart';
 import 'package:agrix/Farmer/ListedProducts.dart';
 import 'package:agrix/Home/FarmerHome.dart';
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_translate/flutter_translate.dart';
+import '../Consumer/UpdateDetails.dart';
 import '../Home/ConsumerHome.dart';
 import '../preferences.dart';
 import '../Registering/SignIn.dart';
+import 'SalesReport.dart';
 import 'SalesTrack.dart';
 
 class AccountdetailsF extends StatefulWidget {
@@ -63,7 +66,7 @@ class _AccountdetailsFState extends State<AccountdetailsF> {
       appBar: AppBar(
         title: Text(
           translate('Account'),
-          style: TextStyle(
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 24,
@@ -117,7 +120,12 @@ class _AccountdetailsFState extends State<AccountdetailsF> {
                       _buildGridButton(translate('Sales'), Icons.people_outline, Colors.blue[100],() {
                         Navigator.push(context, MaterialPageRoute(builder: (context) => Salestrack()));
                       }),
-                      _buildGridButton(translate('Reports'), Icons.bar_chart_outlined, Colors.blue[100]),
+                      _buildGridButton(translate('Sales Report'), Icons.bar_chart_outlined, Colors.blue[100], (){
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => Salesreport()));
+                      }),
+                      _buildGridButton(translate('Account'), Icons.person, Colors.blue[100], (){
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => Updatedetails(consumer: userData)));
+                      }),
                     ],
                   ),
                   const SizedBox(height: 40.0),
@@ -145,7 +153,22 @@ class _AccountdetailsFState extends State<AccountdetailsF> {
     await Preferences.setLanguge(_isGujarati);
 
     setState(() {
-      print('Language changed to: ${newLocale.languageCode}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: AwesomeSnackbarContent(
+            title: translate('Success'),
+            message: (_isGujarati)? 'ભાષા ગુજરાતી માં બદલાયેલ છે' : 'Language changed to English!',
+            contentType: ContentType.success,
+            inMaterialBanner: true,
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
     });
     Navigator.pushReplacement(context, CupertinoDialogRoute(builder: (context) => FarmerHome(user: FirebaseAuth.instance.currentUser!.uid), context: context));
   }

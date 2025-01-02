@@ -16,23 +16,28 @@ class AdminHome extends StatefulWidget {
 
 class _AdminHomeState extends State<AdminHome> {
   int _selectedIndex = 0;
+  final PageStorageBucket _bucket = PageStorageBucket();
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (_selectedIndex != index) {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
   }
+
   final List<Widget> _pages = [
-    const Consumerbase(),
-    ConsumersList(),
-    FarmersList()
+    const Consumerbase(key: PageStorageKey('Home')),
+    ConsumersList(key: PageStorageKey('ConsumerList')),
+    FarmersList(key: PageStorageKey('FarmersList'))
   ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
+      body: PageStorage(
+        bucket: _bucket,
+        child: _pages[_selectedIndex],
       ),
       bottomNavigationBar: FlashyTabBar(
         selectedIndex: _selectedIndex,
@@ -42,7 +47,6 @@ class _AdminHomeState extends State<AdminHome> {
         items: [
           FlashyTabBarItem(
             activeColor: Colors.green,
-            // inactiveColor: Colors.black12,
             icon: Icon(Icons.home),
             title: Text("Home"),
           ),

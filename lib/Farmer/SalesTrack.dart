@@ -3,7 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:intl/intl.dart'; // Add this for date formatting
+import 'package:flutter_translate/flutter_translate.dart';
+import 'package:intl/intl.dart';
 
 class Salestrack extends StatefulWidget {
   const Salestrack({super.key});
@@ -15,6 +16,8 @@ class Salestrack extends StatefulWidget {
 class _SalestrackState extends State<Salestrack> {
   List<String> farmerProductIds = [];
   List<Map<String, dynamic>> farmerOrders = [];
+  String _sortBy = 'date'; // Default sort option
+  bool _isAscending = true; // Default order is ascending
 
   @override
   void initState() {
@@ -25,7 +28,6 @@ class _SalestrackState extends State<Salestrack> {
   Future<void> fetchFarmerProductsAndOrders() async {
     try {
       String farmerUserId = FirebaseAuth.instance.currentUser!.uid;
-      print('Fetching products for Farmer ID: $farmerUserId');
 
       // Fetch farmer's products
       QuerySnapshot productSnapshot = await FirebaseFirestore.instance
@@ -33,27 +35,15 @@ class _SalestrackState extends State<Salestrack> {
           .where('user_id', isEqualTo: farmerUserId)
           .get();
 
-      if (productSnapshot.docs.isEmpty) {
-        print("No products found for this farmer.");
-      } else {
-        print("Products fetched successfully!");
-      }
-
       setState(() {
-        farmerProductIds = productSnapshot.docs.map((doc) {
-          return doc.id;
-        }).toList();
+        farmerProductIds = productSnapshot.docs.map((doc) => doc.id).toList();
       });
-
-      print("Farmer Product IDs: $farmerProductIds");
 
       // Fetch orders that have these products
       QuerySnapshot orderSnapshot = await FirebaseFirestore.instance
           .collection('Orders')
           .where('productIds', arrayContainsAny: farmerProductIds)
           .get();
-
-      print("Total Orders Fetched: ${orderSnapshot.docs.length}");
 
       for (var orderDoc in orderSnapshot.docs) {
         Map<String, dynamic>? orderData = orderDoc.data() as Map<String, dynamic>?;
@@ -62,8 +52,7 @@ class _SalestrackState extends State<Salestrack> {
           List<dynamic>? productIdsInOrder = orderData['productIds'] as List<dynamic>?;
           Map<String, dynamic>? quantitiesInOrder = orderData['quantities'] as Map<String, dynamic>?;
 
-          // Fetch userId from the order
-          String userId = orderData['userId'] ?? 'Unknown User'; // Fetch userId
+          String userId = orderData['userId'] ?? 'Unknown User';
 
           if (productIdsInOrder != null && quantitiesInOrder != null) {
             bool hasFarmerProduct = productIdsInOrder.any((productId) {
@@ -78,7 +67,6 @@ class _SalestrackState extends State<Salestrack> {
                 if (farmerProductIds.contains(productId)) {
                   int quantity = quantitiesInOrder[productId] ?? 0;
 
-                  // Fetch price from the Products collection if not available in the order
                   double productPrice = 0.0;
                   DocumentSnapshot productSnapshot = await FirebaseFirestore.instance
                       .collection('Products')
@@ -88,9 +76,9 @@ class _SalestrackState extends State<Salestrack> {
                   if (productSnapshot.exists) {
                     var priceData = productSnapshot['price'];
                     if (priceData is String) {
-                      productPrice = double.parse(priceData); // Convert string to double
+                      productPrice = double.parse(priceData);
                     } else if (priceData is num) {
-                      productPrice = priceData.toDouble(); // Handle number types (int, double)
+                      productPrice = priceData.toDouble();
                     }
                   }
 
@@ -104,7 +92,6 @@ class _SalestrackState extends State<Salestrack> {
                 }
               }
 
-              // Format timestamp to readable date and time
               Timestamp? orderTimestamp = orderData['orderTime'] as Timestamp?;
               String formattedDateTime = 'Unknown Date';
               if (orderTimestamp != null) {
@@ -115,9 +102,9 @@ class _SalestrackState extends State<Salestrack> {
               setState(() {
                 farmerOrders.add({
                   'orderId': orderDoc.id,
-                  'userId': userId, // Store userId from orders
-                  'totalCost': totalCostForFarmer, // Update total cost for farmer's products only
-                  'orderTime': formattedDateTime, // Use formatted date and time
+                  'userId': userId,
+                  'totalCost': totalCostForFarmer,
+                  'orderTime': formattedDateTime,
                   'products': farmerProductsInOrder,
                 });
               });
@@ -125,14 +112,27 @@ class _SalestrackState extends State<Salestrack> {
           }
         }
       }
-
-      if (farmerOrders.isEmpty) {
-        print("No orders found for farmer's products.");
-      }
-
     } catch (e) {
       print("Error fetching farmer products or orders: $e");
     }
+  }
+
+  List<Map<String, dynamic>> _sortOrders(List<Map<String, dynamic>> orders) {
+    orders.sort((a, b) {
+      int compareResult = 0;
+      switch (_sortBy) {
+        case 'date':
+          compareResult = a['orderTime'].compareTo(b['orderTime']);
+          break;
+        case 'price':
+          compareResult = a['totalCost'].compareTo(b['totalCost']);
+          break;
+        default:
+          break;
+      }
+      return _isAscending ? compareResult : -compareResult;
+    });
+    return orders;
   }
 
   void navigateToOrderDetails(Map<String, dynamic> order) {
@@ -150,40 +150,113 @@ class _SalestrackState extends State<Salestrack> {
       appBar: AppBar(
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
-        title: const Text(
-          'Sales Track',
+        title: Text(
+          translate('Sales Track'),
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: farmerOrders.isEmpty
-          ? Center(child: SpinKitWaveSpinner(color: Colors.green))
-          : ListView.builder(
-        itemCount: farmerOrders.length,
-        itemBuilder: (context, index) {
-          var order = farmerOrders[index];
-          return Card(
-            elevation: 4,
-            margin: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: ListTile(
-              title: Text(
-                "Order ID: ${order['orderId']}",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("User ID: ${order['userId']}"), // Display userId from orders
-                  Text("Total Cost: ${order['totalCost']}"),
-                  Text("Order Time: ${order['orderTime']}"),
-                ],
-              ),
-              trailing: Icon(Icons.arrow_forward_ios),
-              onTap: () {
-                navigateToOrderDetails(order);
+      body: Stack(
+        children: [
+          farmerOrders.isEmpty
+              ? Center(child: SpinKitWaveSpinner(color: Colors.green))
+              : ListView.builder(
+            itemCount: farmerOrders.length,
+            itemBuilder: (context, index) {
+              var order = farmerOrders[index];
+              return Card(
+                elevation: 4,
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                child: ListTile(
+                  title: Text(
+                    "${translate('Order Id')}: ${order['orderId']}",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("${translate('User Id')}: ${order['userId']}"),
+                      Text("${translate('Total Cost')}: ${order['totalCost']}"),
+                      Text("${translate('Order Time')}: ${order['orderTime']}"),
+                    ],
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios),
+                  onTap: () {
+                    navigateToOrderDetails(order);
+                  },
+                ),
+              );
+            },
+          ),
+          Positioned(
+            bottom: 16,
+            right: 16,
+            child: FloatingActionButton(
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(16.0)),
+                  ),
+                  builder: (context) {
+                    return Container(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Sort Options',
+                            style: TextStyle(
+                              fontSize: 18.0,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green.shade800,
+                            ),
+                          ),
+                          const Divider(),
+                          ListTile(
+                            leading: const Icon(Icons.calendar_today, color: Colors.green),
+                            title: const Text('Sort by Date'),
+                            onTap: () {
+                              setState(() {
+                                _sortBy = 'date';
+                              });
+                              Navigator.pop(context);
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.attach_money, color: Colors.green),
+                            title: const Text('Sort by Price'),
+                            onTap: () {
+                              setState(() {
+                                _sortBy = 'price';
+                              });
+                              Navigator.pop(context);
+                            },
+                          ),
+                          ListTile(
+                            leading: Icon(
+                              _isAscending ? Icons.arrow_upward : Icons.arrow_downward,
+                              color: Colors.green,
+                            ),
+                            title: Text(
+                              _isAscending ? 'Descending Order' : 'Ascending Order',
+                            ),
+                            onTap: () {
+                              setState(() {
+                                _isAscending = !_isAscending;
+                              });
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
               },
+              child: const Icon(Icons.filter_alt),
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }

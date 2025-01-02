@@ -1,6 +1,7 @@
 import 'package:agrix/Home/ConsumerHome.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_translate/flutter_translate.dart';
 
 class SuccessPage extends StatelessWidget {
   const SuccessPage({Key? key}) : super(key: key);
@@ -25,7 +26,7 @@ class SuccessPage extends StatelessWidget {
               SizedBox(height: 30),
               // Success Text
               Text(
-                'Order Placed Successfully!',
+                translate('Order Placed Successfully!'),
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
@@ -36,7 +37,7 @@ class SuccessPage extends StatelessWidget {
               SizedBox(height: 10),
               // Subtitle
               Text(
-                'Your order has been placed successfully and is now being processed. Thank you for shopping with us!',
+                translate('Your order has been placed successfully and is now being processed. Thank you for shopping with us!'),
                 style: TextStyle(
                   fontSize: 18,
                   color: Colors.grey[600],
@@ -52,7 +53,7 @@ class SuccessPage extends StatelessWidget {
                   // // Reinitialize the app by clearing the entire stack and navigating to home
                   // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ConsumerHome(user: FirebaseAuth.instance.currentUser!.uid)));
                 },
-                child: Text('Go to Home'),
+                child: Text(translate('Go to Home')),
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white, // Text color
                   backgroundColor: Colors.green, // Button color
@@ -68,19 +69,19 @@ class SuccessPage extends StatelessWidget {
               ),
               SizedBox(height: 20),
               // Optional: Add any other action buttons like "View Order" or "Track Order"
-              TextButton(
-                onPressed: () {
-                  // Add action to view or track order
-                },
-                child: Text(
-                  'View Order Details',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.green,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
+              // TextButton(
+              //   onPressed: () {
+              //     // Add action to view or track order
+              //   },
+              //   child: Text(
+              //     'View Order Details',
+              //     style: TextStyle(
+              //       fontSize: 16,
+              //       color: Colors.green,
+              //       fontWeight: FontWeight.w600,
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ),

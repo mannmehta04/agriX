@@ -1,1 +1,0 @@
- C:\\Users\\ASUS\\StudioProjects\\agriX\\.dart_tool\\flutter_build\\a550721dab3c19b666a0b8b24853b0a8\\native_assets.yaml: 

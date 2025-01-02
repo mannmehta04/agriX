@@ -1,9 +1,8 @@
 import 'package:agrix/CartView.dart';
 import 'package:agrix/Consumer/CategorySearch.dart';
 import 'package:agrix/Consumer/ConsumerBase.dart';
+import 'package:agrix/ExplorePage.dart';
 import 'package:agrix/Farmer/AccountDetails.dart';
-import 'package:agrix/Farmer/AddProducts.dart';
-import 'package:agrix/Farmer/FarmerBase.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +13,7 @@ import '../CartView.dart';
 
 class FarmerHome extends StatefulWidget {
   final String user;
-  const FarmerHome({super.key,required this.user});
+  const FarmerHome({super.key, required this.user});
 
   @override
   State<FarmerHome> createState() => _FarmerHomeState();
@@ -26,17 +25,22 @@ class _FarmerHomeState extends State<FarmerHome> {
   final List<Widget> _pages = [
     const Consumerbase(),
     Cartview(cartId: FirebaseAuth.instance.currentUser!.uid),
-    AccountdetailsF(user: FirebaseAuth.instance.currentUser!.uid),
+    ExplorePage(),
     Categorysearch(),
     AccountdetailsF(user: FirebaseAuth.instance.currentUser!.uid),
   ];
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
+
   @override
   Widget build(BuildContext context) {
+    double iconSize = MediaQuery.of(context).size.width * 0.07;
+    double fontSize = MediaQuery.of(context).size.width * 0.035;
+
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
@@ -50,29 +54,28 @@ class _FarmerHomeState extends State<FarmerHome> {
         items: [
           FlashyTabBarItem(
             activeColor: Colors.green,
-            // inactiveColor: Colors.black12,
-            icon: Icon(Icons.home),
-            title: Text(translate('Home')),
+            icon: Icon(Icons.home, size: iconSize),
+            title: Text(translate('Home'), style: TextStyle(fontSize: fontSize)),
           ),
           FlashyTabBarItem(
             activeColor: Colors.green,
-            icon: Icon(Icons.shopping_cart),
-            title: Text(translate('Cart')),
+            icon: Icon(Icons.shopping_cart, size: iconSize),
+            title: Text(translate('Cart'), style: TextStyle(fontSize: fontSize)),
           ),
           FlashyTabBarItem(
             activeColor: Colors.green,
-            icon: Icon(Icons.explore),
-            title: Text(translate('Explore')),
+            icon: Icon(Icons.explore, size: iconSize),
+            title: Text(translate('Explore'), style: TextStyle(fontSize: fontSize)),
           ),
           FlashyTabBarItem(
             activeColor: Colors.green,
-            icon: Icon(Icons.category),
-            title: Text(translate('Category')),
+            icon: Icon(Icons.category, size: iconSize),
+            title: Text(translate('Category'), style: TextStyle(fontSize: fontSize)),
           ),
           FlashyTabBarItem(
             activeColor: Colors.green,
-            icon: Icon(Icons.account_circle),
-            title: Text(translate('Account')),
+            icon: Icon(Icons.account_circle, size: iconSize),
+            title: Text(translate('Account'), style: TextStyle(fontSize: fontSize)),
           ),
         ],
       ),

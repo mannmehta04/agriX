@@ -4,6 +4,7 @@ import 'package:agrix/Farmer/UpdateProduct.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter_translate/flutter_translate.dart';
 
 class ListedProducts extends StatefulWidget {
   const ListedProducts({super.key, required String user});
@@ -26,7 +27,8 @@ class _ListedProductsState extends State<ListedProducts> {
     return Scaffold(
       appBar: AppBar(
         foregroundColor: Colors.white,
-        title: const Text('Listed Products',
+        title: Text(
+          translate('Listed Product'),
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.green,
@@ -43,7 +45,7 @@ class _ListedProductsState extends State<ListedProducts> {
             MaterialPageRoute(builder: (context) => AddProducts(user: FirebaseAuth.instance.currentUser!.uid)),
           );
         },
-        label: const Text("Add Product"),
+        label: Text(translate("Add Product")),
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
       ),
@@ -100,7 +102,7 @@ class _ListedProductsState extends State<ListedProducts> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                product['name'] ?? 'Product Name',
+                                translate(product['name']) ?? 'Product Name',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -110,7 +112,7 @@ class _ListedProductsState extends State<ListedProducts> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Rs ${product['price'] ?? '0.00'}',
+                                '₹ ${product['price'] ?? '0.00'}',
                                 style: const TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_translate/flutter_translate.dart';
 
 class Orderdetails extends StatefulWidget {
   final Map<String, dynamic> order; // Receives the order data
@@ -62,7 +63,7 @@ class _OrderdetailsState extends State<Orderdetails> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Order Details'),
+        title: Text(translate('Order Details')),
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
       ),
@@ -76,20 +77,20 @@ class _OrderdetailsState extends State<Orderdetails> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Order ID: ${order['orderId']}",
+                  "${translate('Order Id')}: ${order['orderId']}",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
                 SizedBox(height: 8),
-                Text("Total Cost: ${order['totalCost']}"),
-                Text("Order Time: ${order['orderTime']}"),
+                Text("${translate('Total Cost')}: ${order['totalCost']}"),
+                Text("${translate('Order Time')}: ${order['orderTime']}"),
                 Divider(),
                 Text(
-                  "Ordered by: ${firstName ?? 'Loading...'} ${lastName ?? ''}", // Display firstName and lastName
+                  "${translate('Ordered By')}: ${firstName ?? 'Loading...'} ${lastName ?? ''}", // Display firstName and lastName
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 Divider(),
                 Text(
-                  "Products Sold:",
+                  translate("Products Sold"),
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 SizedBox(height: 8),
@@ -97,7 +98,7 @@ class _OrderdetailsState extends State<Orderdetails> {
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4.0),
                     child: Text(
-                      "Product ID: ${product['productId']}, Quantity: ${product['quantity']}",
+                      "${translate('Product Id')}: ${product['productId']}, ${translate('Quantity')}: ${product['quantity']}",
                       style: TextStyle(fontSize: 16),
                     ),
                   );

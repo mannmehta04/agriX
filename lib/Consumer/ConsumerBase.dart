@@ -6,6 +6,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_translate/flutter_translate.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../Registering/DesignationFinder.dart';
 
@@ -222,38 +223,50 @@ class _ConsumerbaseState extends State<Consumerbase> {
                                     children: [
                                       ClipRRect(
                                         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                                        child: Image.network(
-                                          product['img1Url'] ?? '',
+                                        child: CachedNetworkImage(
+                                          imageUrl: product['img1Url'] ?? '',
                                           height: cardHeight * 0.6,
                                           width: double.infinity,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) =>
-                                              Icon(Icons.broken_image, size: cardHeight * 0.6),
+                                          placeholder: (context, url) => Center(
+                                            child: SpinKitWaveSpinner(
+                                              color: Colors.green,
+                                            ),
+                                          ),
+                                          errorWidget: (context, url, error) => Icon(
+                                            Icons.broken_image,
+                                            size: cardHeight * 0.6,
+                                            color: Colors.grey,
+                                          ),
                                         ),
                                       ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(12.0),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              translate('${product['name']}'),
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
+                                      Expanded(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(12.0),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  translate('${product['name']}'),
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16.5,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
                                               ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              '₹ ${product['price'] ?? '0.00'}',
-                                              style: const TextStyle(
-                                                color: Colors.green,
-                                                fontSize: 14,
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                '₹ ${product['price'] ?? '0.00'}',
+                                                style: const TextStyle(
+                                                  color: Colors.green,
+                                                  fontSize: 14,
+                                                ),
                                               ),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ],

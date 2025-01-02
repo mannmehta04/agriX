@@ -1,7 +1,5 @@
 import 'package:agrix/Consumer/CategoryView.dart';
 import 'package:flutter/material.dart';
-
-import 'package:flutter/material.dart';
 import 'package:flutter_translate/flutter_translate.dart';
 
 class Categorysearch extends StatefulWidget {
@@ -33,12 +31,15 @@ class _CategorysearchState extends State<Categorysearch> {
         backgroundColor: Colors.green,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: Text(
-          translate('Category'),
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            translate('Category'),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 24,
+            ),
           ),
         ),
         centerTitle: true,
@@ -70,9 +71,19 @@ class _CategorysearchState extends State<Categorysearch> {
                         ),
                         itemCount: category.length,
                         itemBuilder: (context, index) {
-                          return _buildGridButton(category[index], Icons.category, Colors.blue[100], () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => Categoryview(category: category[index])));
-                          });
+                          return _buildGridButton(
+                            category[index],
+                            Icons.category,
+                            Colors.blue[100],
+                                () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => Categoryview(category: category[index]),
+                                ),
+                              );
+                            },
+                          );
                         },
                       );
                     },
@@ -85,6 +96,7 @@ class _CategorysearchState extends State<Categorysearch> {
       ),
     );
   }
+
   Widget _buildGridButton(String text, IconData icon, Color? color, [VoidCallback? onPressed]) {
     return GestureDetector(
       onTap: onPressed ?? () {},
@@ -106,14 +118,17 @@ class _CategorysearchState extends State<Categorysearch> {
           children: [
             Icon(icon, size: 32, color: Colors.black87),
             const SizedBox(height: 10),
-            Text(
-              text,
-              style: const TextStyle(
-                color: Colors.black87,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                text,
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),

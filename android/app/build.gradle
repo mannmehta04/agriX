@@ -96,6 +96,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-appcheck-debug:16.0.0-beta02'
     implementation 'com.google.android.gms:play-services-auth:19.0.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
 }
 
 android{

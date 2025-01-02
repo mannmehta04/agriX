@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_translate/flutter_translate.dart';
 
 import '../Consumer/CategorySearch.dart';
+import '../ExplorePage.dart';
 
 class ConsumerHome extends StatefulWidget {
   final String user;
@@ -22,7 +23,7 @@ class _ConsumerHomeState extends State<ConsumerHome> {
   final List<Widget> _pages = [
     const Consumerbase(),
     Cartview(cartId: FirebaseAuth.instance.currentUser!.uid),
-    Accountdetails(user: FirebaseAuth.instance.currentUser!.uid),
+    ExplorePage(),
     const Categorysearch(),
     Accountdetails(user: FirebaseAuth.instance.currentUser!.uid)
   ];

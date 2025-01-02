@@ -1,8 +1,12 @@
 import 'dart:math'; // Import for generating random numbers
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter_translate/flutter_translate.dart';
 
 class ProductDetails extends StatefulWidget {
   final Map<String, dynamic> item;
@@ -53,7 +57,20 @@ class _ProductDetailsState extends State<ProductDetails> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Product added to Cart successfully!')),
+        SnackBar(
+          content: const AwesomeSnackbarContent(
+            title: 'Success!',
+            message: 'Product added to Cart successfully!',
+            contentType: ContentType.success,
+            inMaterialBanner: true,
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
       );
     } catch (e) {
       print('Error adding product to Cart: $e');
@@ -120,27 +137,24 @@ class _ProductDetailsState extends State<ProductDetails> {
                               child: Stack(
                                 fit: StackFit.expand,
                                 children: [
-                                  Image.network(
-                                    url,
-                                    fit: BoxFit.cover, // Cover the container while maintaining aspect ratio
-                                    loadingBuilder: (context, child, progress) {
-                                      if (progress == null) return child; // Image loaded, show it
-                                      return Container(
-                                        decoration: const BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [Colors.grey, Colors.white],
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                          ),
+                                  CachedNetworkImage(
+                                    imageUrl: url,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Container(
+                                      decoration: const BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [Colors.grey, Colors.white],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
                                         ),
-                                        child: const Center(
-                                          child: CircularProgressIndicator(
-                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
-                                          ),
+                                      ),
+                                      child: const Center(
+                                        child: SpinKitWaveSpinner(
+                                          color: Colors.green,
                                         ),
-                                      ); // Show a gradient loading effect
-                                    },
-                                    errorBuilder: (context, error, stackTrace) => Container(
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) => Container(
                                       color: Colors.grey.shade200,
                                       child: const Center(
                                         child: Icon(Icons.broken_image, size: 50, color: Colors.red),
@@ -203,7 +217,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        name,
+                        translate(name),
                         style: const TextStyle(
                           fontSize: 28.0,
                           fontWeight: FontWeight.bold,
@@ -224,8 +238,8 @@ class _ProductDetailsState extends State<ProductDetails> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'About',
+                      Text(
+                        translate('About'),
                         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       IconButton(
@@ -240,12 +254,12 @@ class _ProductDetailsState extends State<ProductDetails> {
                   ),
                   const SizedBox(height: 4.0),
                   Text(
-                    description,
+                    translate(description),
                     style: const TextStyle(fontSize: 16.0, height: 1.5),
                   ),
                   const SizedBox(height: 16.0),
                   Text(
-                    'Price: Rs ${price.toStringAsFixed(2)} / $unit',
+                    '${translate('Price')}: ₹ ${price.toStringAsFixed(2)} / ${translate(unit)}',
                     style: const TextStyle(
                       fontSize: 20.0,
                       fontWeight: FontWeight.bold,
@@ -263,7 +277,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Rs ${price.toStringAsFixed(2)}',
+                          '₹ ${price.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 18.0,
                             color: Colors.green,
@@ -282,7 +296,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                             ),
                           ),
                           child: Text(
-                            'Add to Cart',
+                            translate('Add to Cart'),
                             style: const TextStyle(fontSize: 18.0, color: Colors.white),
                           ),
                         ),

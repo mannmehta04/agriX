@@ -1,6 +1,7 @@
 import 'package:agrix/Consumer/UpdateDetails.dart';
 import 'package:agrix/Home/ConsumerHome.dart';
 import 'package:agrix/Registering/SignIn.dart';
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -29,7 +30,11 @@ class _AccountdetailsState extends State<Accountdetails> {
   List<bool> fileUploaded = [];
   bool isUploading = false;
 
-  final List<String> requiredDocuments = ["Aadhar", "PAN", "Land Certificate"];
+  final List<String> requiredDocuments = [
+    translate("Aadhar Card"),
+    translate("PAN Card"),
+    translate("Land Certificate")
+  ];
 
   @override
   void initState() {
@@ -41,7 +46,7 @@ class _AccountdetailsState extends State<Accountdetails> {
   void initializeFileData() async{
     _isGujarati = Preferences.isEnglish;
     selectedFiles = List<File?>.filled(requiredDocuments.length, null);
-    fileNames = List<String>.from(requiredDocuments.map((doc) => "Select $doc"));
+    fileNames = List<String>.from(requiredDocuments.map((doc) => translate(doc)));
     fileUploaded = List<bool>.filled(requiredDocuments.length, false);
   }
 
@@ -162,8 +167,8 @@ class _AccountdetailsState extends State<Accountdetails> {
         backgroundColor: Colors.green,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Account',
+        title: Text(
+          translate('Account'),
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -190,7 +195,7 @@ class _AccountdetailsState extends State<Accountdetails> {
                 children: [
                   const SizedBox(height: 20.0),
                   Text(
-                    "Hey, $fname $lname",
+                    '${translate('Hey')},\n$fname $lname',
                     style: const TextStyle(
                       color: Colors.black87,
                       fontSize: 28,
@@ -218,33 +223,72 @@ class _AccountdetailsState extends State<Accountdetails> {
                         itemBuilder: (context, index) {
                           switch (index) {
                             case 0:
-                              return _buildGridButton('Orders', Icons.shopping_cart_outlined, Colors.blue[100], (){
+                              return _buildGridButton(translate('Orders'), Icons.shopping_cart_outlined, Colors.blue[100], (){
                                 Navigator.push(context, MaterialPageRoute(builder: (context) => Pastorders()));
                               });
                             case 1:
-                              return _buildGridButton('Products', Icons.storefront_outlined, Colors.blue[100], () {
+                              return _buildGridButton(translate('Products'), Icons.storefront_outlined, Colors.blue[100], () {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Become Farmer to list products')),
+                                  SnackBar(
+                                    content: AwesomeSnackbarContent(
+                                      title: translate('Wait!'),
+                                      message: (_isGujarati)? 'ઉત્પાદન સૂચિ માટે ખેડૂત બનો' : 'Become Farmer to see List Products',
+                                      contentType: ContentType.help,
+                                      inMaterialBanner: true,
+                                    ),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: Colors.transparent,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
                                 );
                               });
                             case 2:
-                              return _buildGridButton('Customers', Icons.people_outline, Colors.blue[100], () {
+                              return _buildGridButton(translate('Customer'), Icons.people_outline, Colors.blue[100], () {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Become Farmer to know your customers')),
+                                  SnackBar(
+                                    content: AwesomeSnackbarContent(
+                                      title: translate('Wait!'),
+                                      message: (_isGujarati)? 'ગ્રાહક વેચાણ જોવા માટે ખેડૂત બનો' : 'Become Farmer to see Customer Sales',
+                                      contentType: ContentType.help,
+                                      inMaterialBanner: true,
+                                    ),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: Colors.transparent,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
                                 );
                               });
                             case 3:
-                              return _buildGridButton('Reports', Icons.bar_chart_outlined, Colors.blue[100], () {
+                              return _buildGridButton(translate('Sales Report'), Icons.bar_chart_outlined, Colors.blue[100], () {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Become Farmer to see Sales reports')),
+                                  SnackBar(
+                                    content: AwesomeSnackbarContent(
+                                      title: translate('Wait!'),
+                                      message: (_isGujarati)? 'વેચાણ રિપોર્ટ જોવા માટે ખેડૂત બનો' : 'Become Farmer to see Sales Report',
+                                      contentType: ContentType.help,
+                                      inMaterialBanner: true,
+                                    ),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: Colors.transparent,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
                                 );
                               });
                             case 4:
-                              return _buildGridButton('Account Details', Icons.person, Colors.blue[100], () {
+                              return _buildGridButton(translate('Account Details'), Icons.person, Colors.blue[100], () {
                                 Navigator.push(context, MaterialPageRoute(builder: (context) => Updatedetails(consumer: userData)));
                               });
                             case 5:
-                              return _buildGridButton('Become a Farmer', Icons.agriculture_outlined, Colors.greenAccent, () {
+                              return _buildGridButton(translate('Become a Farmer'), Icons.agriculture_outlined, Colors.greenAccent, () {
                                 _showFilePickerCard(context);
                               });
                             default:
@@ -286,7 +330,22 @@ class _AccountdetailsState extends State<Accountdetails> {
     await Preferences.setLanguge(_isGujarati);
 
     setState(() {
-      print('Language changed to: ${newLocale.languageCode}');
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: AwesomeSnackbarContent(
+              title: translate('Success'),
+              message: (_isGujarati)? 'ભાષા ગુજરાતી માં બદલાયેલ છે' : 'Language changed to English!',
+              contentType: ContentType.success,
+              inMaterialBanner: true,
+            ),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+      );
     });
     Navigator.pushReplacement(context, CupertinoDialogRoute(builder: (context) => ConsumerHome(user: FirebaseAuth.instance.currentUser!.uid), context: context));
   }
@@ -367,7 +426,7 @@ class _AccountdetailsState extends State<Accountdetails> {
           builder: (context, setState) {
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text('Upload Documents'),
+              title: Text(translate('Upload Documents')),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: List.generate(requiredDocuments.length, (index) {

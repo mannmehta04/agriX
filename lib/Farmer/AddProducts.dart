@@ -1,5 +1,7 @@
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter_translate/flutter_translate.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -100,7 +102,20 @@ class _AddProductsState extends State<AddProducts> {
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product added successfully')),
+          SnackBar(
+            content: AwesomeSnackbarContent(
+              title: translate('Success'),
+              message: 'Product Listed Successfully!',
+              contentType: ContentType.success,
+              inMaterialBanner: true,
+            ),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
         );
         Navigator.pop(context);
       }).catchError((error) {
@@ -125,8 +140,9 @@ class _AddProductsState extends State<AddProducts> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Product'),
+        title: Text(translate('Add Product')),
         backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -148,15 +164,15 @@ class _AddProductsState extends State<AddProducts> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildTextFormField(
-                    'Product Name',
-                    'Enter product name',
+                    translate('Product Name'),
+                    translate('Enter product name'),
                     _nameController,
                     icon: Icons.production_quantity_limits,
                   ),
                   SizedBox(height: screenHeight * 0.02),
                   _buildDropdownFormField(
-                    'Category',
-                    'Select category',
+                    translate('Category'),
+                    translate('Select category'),
                     category,
                     type,
                         (newValue) => setState(() {
@@ -166,8 +182,8 @@ class _AddProductsState extends State<AddProducts> {
                   ),
                   SizedBox(height: screenHeight * 0.02),
                   _buildTextFormField(
-                    'Description',
-                    'Enter description',
+                    translate('About'),
+                    translate('Enter description'),
                     _descController,
                     maxLines: 3,
                     icon: Icons.description,
@@ -177,8 +193,8 @@ class _AddProductsState extends State<AddProducts> {
                     children: [
                       Expanded(
                         child: _buildTextFormField(
-                          'Price',
-                          'Enter price',
+                          translate('Price'),
+                          translate('Enter price'),
                           _priceController,
                           inputType: TextInputType.number,
                           icon: Icons.attach_money,
@@ -187,8 +203,8 @@ class _AddProductsState extends State<AddProducts> {
                       SizedBox(width: screenWidth * 0.05),
                       Expanded(
                         child: _buildDropdownFormField(
-                          'Unit',
-                          'Select unit',
+                          translate('Unit'),
+                          translate('Select Unit'),
                           units,
                           unit,
                               (newValue) => setState(() {
@@ -201,16 +217,16 @@ class _AddProductsState extends State<AddProducts> {
                   ),
                   SizedBox(height: screenHeight * 0.02),
                   _buildTextFormField(
-                    'Quantity',
-                    'Enter quantity',
+                    translate('Quantity'),
+                    translate('Enter Quantity'),
                     _quantityController,
                     inputType: TextInputType.number,
                     icon: Icons.format_list_numbered,
                   ),
                   SizedBox(height: screenHeight * 0.02),
                   _buildTextFormField(
-                    'Delivery Address',
-                    'Enter delivery address',
+                    translate('Delivery address'),
+                    translate('Enter delivery address'),
                     _deliveryAddress,
                     inputType: TextInputType.streetAddress,
                     icon: Icons.location_on,
@@ -239,7 +255,7 @@ class _AddProductsState extends State<AddProducts> {
                         ),
                       ),
                       child: Text(
-                        'Save Product',
+                        translate('Add Product'),
                         style: TextStyle(
                           fontSize: screenHeight * 0.025,
                           color: Colors.white,

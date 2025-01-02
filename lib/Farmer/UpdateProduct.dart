@@ -4,6 +4,7 @@ import 'package:carousel_slider/carousel_options.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_translate/flutter_translate.dart';
 
 class UpdateProduct extends StatefulWidget {
   final Map<String, dynamic> item;
@@ -59,7 +60,7 @@ class _UpdateProductState extends State<UpdateProduct> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Update $field'),
+          title: Text(translate('Update $field')),
           content: TextField(
             controller: controller,
             keyboardType: field == 'price' ? TextInputType.number : TextInputType.text,
@@ -69,13 +70,13 @@ class _UpdateProductState extends State<UpdateProduct> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: Text(translate('Cancel')),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Update'),
+              child: Text(translate('Update')),
               onPressed: () {
                 Navigator.of(context).pop(controller.text);
               },
@@ -109,8 +110,8 @@ class _UpdateProductState extends State<UpdateProduct> {
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'Product Details',
+        title: Text(
+          translate('Product Details'),
           style: TextStyle(
             fontSize: 20.0,
             fontWeight: FontWeight.bold,
@@ -174,7 +175,7 @@ class _UpdateProductState extends State<UpdateProduct> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        name,
+                        translate(name),
                         style: const TextStyle(
                           fontSize: 28.0,
                           fontWeight: FontWeight.bold,
@@ -191,7 +192,7 @@ class _UpdateProductState extends State<UpdateProduct> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Category: $category',
+                        '${translate('Category')}: ${translate(category)}',
                         style: const TextStyle(
                           fontSize: 18.0,
                           color: Colors.grey,
@@ -199,7 +200,7 @@ class _UpdateProductState extends State<UpdateProduct> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.green),
-                        onPressed: () => _updateField('category', category),
+                        onPressed: () => _updateField('category', translate(category)),
                       ),
                     ],
                   ),
@@ -207,22 +208,22 @@ class _UpdateProductState extends State<UpdateProduct> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Description',
-                        style: TextStyle(
+                      Text(
+                        translate('About'),
+                        style: const TextStyle(
                           fontSize: 20.0,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.green),
-                        onPressed: () => _updateField('desc', description), // Correct field name for description
+                        onPressed: () => _updateField('desc', translate(description)), // Correct field name for description
                       ),
                     ],
                   ),
                   const SizedBox(height: 4.0),
                   Text(
-                    description,
+                    translate(description),
                     style: const TextStyle(
                       fontSize: 16.0,
                       height: 1.5,
@@ -233,7 +234,7 @@ class _UpdateProductState extends State<UpdateProduct> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Price: Rs ${price.toStringAsFixed(2)} / $unit',
+                        '${translate('Price')}: ₹ ${price.toStringAsFixed(2)} / ${translate(unit)}',
                         style: const TextStyle(
                           fontSize: 20.0,
                           fontWeight: FontWeight.bold,
@@ -251,7 +252,7 @@ class _UpdateProductState extends State<UpdateProduct> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Supplier: ${supplierName.isNotEmpty ? supplierName : 'No Supplier yet'}',
+                        '${translate('Supplier')}: ${supplierName.isNotEmpty ? supplierName : 'No Supplier yet'}',
                         style: TextStyle(
                           fontSize: 18.0,
                           color: supplierColor,
@@ -275,10 +276,10 @@ class _UpdateProductState extends State<UpdateProduct> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text(
-                        'Delete Product',
-                        style: TextStyle(
+                        translate('Delete Product'),
+                        style: const TextStyle(
                           fontSize: 18.0,
                           color: Colors.white,
                           fontWeight: FontWeight.bold,

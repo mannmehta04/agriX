@@ -2,11 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-
+import 'package:flutter_translate/flutter_translate.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'SucessPage.dart';
 
 class Ordersummary extends StatefulWidget {
-  final Map<String, int> productQuantities; // A map of product IDs and their quantities
+  final Map<String, int> productQuantities;
   final double totalCost;
   final int totalQuantity;
 
@@ -22,56 +23,110 @@ class Ordersummary extends StatefulWidget {
 }
 
 class _OrdersummaryState extends State<Ordersummary> {
+  late Razorpay _razorpay;
+
+  @override
+  void initState() {
+    super.initState();
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+  }
+
+  @override
+  void dispose() {
+    _razorpay.clear();
+    super.dispose();
+  }
+
+  void _openCheckout() {
+    var options = {
+      'key': 'rzp_test_qOYfW65K8GRMAg', // Use your Razorpay key_id here
+      'amount': (widget.totalCost * 100).toInt(), // Amount in paise
+      'name': 'agriX',
+      'description': 'Organic Product Payment',
+      'timeout': 300, // Payment timeout in seconds
+
+      'prefill': {
+        'contact': FirebaseAuth.instance.currentUser!.phoneNumber,
+        'email': FirebaseAuth.instance.currentUser!.email,
+      },
+    };
+
+    try {
+      _razorpay.open(options);
+    } catch (e) {
+      print('Error opening Razorpay checkout: $e');
+    }
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    print("Payment success: ${response.paymentId}");
+    String userId = FirebaseAuth.instance.currentUser!.uid;
+    Map<String, int> productQuantities = widget.productQuantities;
+    List<String> productIds = productQuantities.keys.toList();
+    double totalCost = widget.totalCost;
+
+    uploadOrderData(
+      productIds: productIds,
+      userId: userId,
+      quantities: productQuantities,
+      totalCost: totalCost,
+    );
+
+    clearUserCart(userId);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => SuccessPage()),
+    );
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    print("Payment failed: ${response.code} | ${response.message}");
+  }
+
   Future<List<Map<String, dynamic>>> _fetchProductDetails() async {
     List<Map<String, dynamic>> products = [];
 
-    // Loop through productIds and fetch details from Firestore
     for (String productId in widget.productQuantities.keys) {
       DocumentSnapshot productSnapshot = await FirebaseFirestore.instance
-          .collection('Products') // Assuming products are stored in 'Products' collection
+          .collection('Products')
           .doc(productId)
           .get();
 
       if (productSnapshot.exists) {
         Map<String, dynamic> productData = productSnapshot.data() as Map<String, dynamic>;
+        double price = productData['price'] is String
+            ? double.tryParse(productData['price']) ?? 0.0
+            : (productData['price'] is double ? productData['price'] : 0.0);
 
-        // Ensure the price is treated as a double
-        double price = 0.0;
-        if (productData['price'] is String) {
-          price = double.tryParse(productData['price']) ?? 0.0; // Convert string to double
-        } else if (productData['price'] is double) {
-          price = productData['price']; // It's already a double
-        }
-
-        productData['price'] = price; // Store the converted price back into the product data
-        productData['quantity'] = widget.productQuantities[productId]; // Attach the quantity from the cart
+        productData['price'] = price;
+        productData['quantity'] = widget.productQuantities[productId];
         products.add(productData);
       }
     }
     return products;
   }
+
   Future<void> uploadOrderData({
     required List<String> productIds,
     required String userId,
-    required Map<String, int> quantities, // Map of product IDs and their quantities
+    required Map<String, int> quantities,
     required double totalCost,
   }) async {
     try {
-      // Prepare the order data
       Map<String, dynamic> orderData = {
         'userId': userId,
         'productIds': productIds,
-        'quantities': quantities, // Store the quantities for each product
+        'quantities': quantities,
         'totalCost': totalCost,
-        'orderTime': Timestamp.now(), // Store the current time
+        'orderTime': Timestamp.now(),
       };
 
-      // Upload the data to Firestore (e.g., to an "Orders" collection)
       await FirebaseFirestore.instance.collection('Orders').add(orderData);
-
       print('Order uploaded successfully!');
       await _updateProductQuantities(quantities);
-
     } catch (e) {
       print('Failed to upload order: $e');
     }
@@ -79,30 +134,23 @@ class _OrdersummaryState extends State<Ordersummary> {
 
   Future<void> clearUserCart(String userId) async {
     try {
-      // Reference to the user's 'products' sub-collection in the Cart document
       CollectionReference cartProductsRef = FirebaseFirestore.instance
           .collection('Cart')
-          .doc(userId) // The cart document ID is the user ID
+          .doc(userId)
           .collection('products');
 
-      // Fetch all documents (products) in the user's cart
       QuerySnapshot cartSnapshot = await cartProductsRef.get();
 
-      // If there are no products, just return
       if (cartSnapshot.docs.isEmpty) {
         print('Cart is already empty.');
         return;
       }
 
-      // Use a batch to delete all documents in one atomic operation
       WriteBatch batch = FirebaseFirestore.instance.batch();
-
       for (QueryDocumentSnapshot doc in cartSnapshot.docs) {
-        // Add each document delete operation to the batch
         batch.delete(doc.reference);
       }
 
-      // Commit the batch operation to delete all documents
       await batch.commit();
       print('Cart cleared successfully!');
     } catch (e) {
@@ -115,44 +163,39 @@ class _OrdersummaryState extends State<Ordersummary> {
 
     for (String productId in quantities.keys) {
       DocumentReference productRef = FirebaseFirestore.instance.collection('Products').doc(productId);
-
-      // Fetch current product data
       DocumentSnapshot productSnapshot = await productRef.get();
 
       if (productSnapshot.exists) {
         Map<String, dynamic> productData = productSnapshot.data() as Map<String, dynamic>;
+        int? currentQuantity = productData['quantity'] is String
+            ? int.tryParse(productData['quantity'])
+            : (productData['quantity'] is int ? productData['quantity'] : 0);
 
-        // Get current quantity from the product data and convert it from string to int
-        int? currentQuantity = 0;
-        if (productData['quantity'] is String) {
-          currentQuantity = int.tryParse(productData['quantity']) ; // Convert string to int
-        } else if (productData['quantity'] is int) {
-          currentQuantity = productData['quantity']; // It's already an int
-        }
-
-        // Calculate new quantity
-        int newQuantity = currentQuantity! - quantities[productId]!;
-
-        // Ensure quantity doesn't drop below zero
-        if (newQuantity < 0) newQuantity = 0;
-
-        // Update the product quantity as a string in Firestore
+        int newQuantity = (currentQuantity! - quantities[productId]!).clamp(0, currentQuantity);
         batch.update(productRef, {'quantity': newQuantity.toString()});
       }
     }
 
-    // Commit the batch update
     await batch.commit();
     print('Product quantities updated successfully!');
   }
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    double getResponsiveFontSize(double baseSize) {
+      return baseSize * (screenWidth / 375); // Adjust based on a base width
+    }
+
     return Scaffold(
       appBar: AppBar(
         foregroundColor: Colors.white,
         backgroundColor: Colors.green,
-        title: Text("Order Summary",style: TextStyle(fontWeight: FontWeight.bold),),
+        title: Text(
+          translate('Order Summary'),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: getResponsiveFontSize(20)), // Smaller font size
+        ),
         centerTitle: true,
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
@@ -161,9 +204,9 @@ class _OrdersummaryState extends State<Ordersummary> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: SpinKitWaveSpinner(color: Colors.green));
           } else if (snapshot.hasError) {
-            return Center(child: Text('Error loading order details'));
+            return Center(child: Text('Error loading order details', style: TextStyle(fontSize: getResponsiveFontSize(14), color: Colors.red))); // Smaller font size
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('No product details available'));
+            return Center(child: Text('No product details available', style: TextStyle(fontSize: getResponsiveFontSize(14)))); // Smaller font size
           }
 
           List<Map<String, dynamic>> productDetails = snapshot.data!;
@@ -178,83 +221,87 @@ class _OrdersummaryState extends State<Ordersummary> {
                     itemCount: productDetails.length,
                     itemBuilder: (context, index) {
                       var product = productDetails[index];
-                      int quantity = product['quantity']; // Quantity from cart
+                      int quantity = product['quantity'];
                       double totalPrice = product['price'] * quantity;
 
-                      return ListTile(
-                        leading: Image.network(
-                          product['img1Url'] ?? 'default_image_url',
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                        ),
-                        title: Text(product['name']),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Price: Rs.${product['price'].toStringAsFixed(2)}'),
-                            Text('Quantity: $quantity'),
-                            Text('Total: Rs.${totalPrice.toStringAsFixed(2)}'),
-                          ],
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.2),
+                                spreadRadius: 1,
+                                blurRadius: 5,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: ListTile(
+                            contentPadding: EdgeInsets.all(10),
+                            leading: Container(
+                              width: screenWidth < 400 ? 50 : 80,
+                              height: screenWidth < 400 ? 50 : 80,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  product['img1Url'] ?? 'default_image_url',
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              translate(product['name']),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: getResponsiveFontSize(16)), // Smaller font size
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('${translate('Price')}: ₹${product['price'].toStringAsFixed(2)}', style: TextStyle(fontSize: getResponsiveFontSize(14))), // Smaller font size
+                                Text('${translate('Quantity')}: $quantity', style: TextStyle(fontSize: getResponsiveFontSize(14))), // Smaller font size
+                                Text('${translate('Total')}: ₹${totalPrice.toStringAsFixed(2)}', style: TextStyle(fontSize: getResponsiveFontSize(14))), // Smaller font size
+                              ],
+                            ),
+                          ),
                         ),
                       );
                     },
                   ),
                 ),
                 Divider(),
-                // Display total quantity and total cost
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Total Quantity: ${widget.totalQuantity}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${translate('Total Quantity')}: ${widget.totalQuantity}',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: getResponsiveFontSize(16)), // Smaller font size
                       ),
-                    ),
-                    Text(
-                      'Total Cost: Rs.${widget.totalCost.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                      Text(
+                        '${translate('Total Cost')}: ₹ ${widget.totalCost.toStringAsFixed(2)}',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: getResponsiveFontSize(16)), // Smaller font size
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 SizedBox(height: 20),
-                // Confirm Order button
                 Center(
                   child: ElevatedButton(
-                    onPressed: () async{
-                      String userId = FirebaseAuth.instance.currentUser!.uid;
-
-                      // Get product IDs, quantities, and total cost from the current order
-                      Map<String, int> productQuantities = widget.productQuantities;
-                      List<String> productIds = productQuantities.keys.toList();
-                      double totalCost = widget.totalCost;
-
-                      // Upload the order to Firestore
-                      await uploadOrderData(
-                        productIds: productIds,
-                        userId: userId,
-                        quantities: productQuantities,
-                        totalCost: totalCost,
-                      );
-
-                      await clearUserCart(userId);
-
-                      // Navigate to another page or show a success message
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => SuccessPage()));
-                    },
-                    child: Text('Confirm Order'),
+                    onPressed: _openCheckout,
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.white,
                       backgroundColor: Colors.green,
-                      padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                      textStyle: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      elevation: 5,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                      child: Text(
+                        translate('Confirm Order'),
+                        style: TextStyle(fontSize: getResponsiveFontSize(18)), // Smaller font size
                       ),
                     ),
                   ),
